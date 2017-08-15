@@ -10,9 +10,12 @@
 #define MAX_OUTPUTS 7
 #define MIN_OUTPUTS 1
 
+//Definiciones de pines
+#define analogPin A0
+
 typedef struct {
-  uint8_t delay;
-  uint8_t pulse;
+  int16_t delay;
+  uint16_t pulse;
   uint8_t outputs;
 } config_u;
 
@@ -28,7 +31,6 @@ typedef enum {
 typedef enum {
   hello,
   counter,
-  menu_entry,
   menu_delay,
   menu_pulse,
   menu_outputs,
@@ -47,6 +49,7 @@ byte c3[8] = {B11100,  B11100,  B11100,  B11100,  B11100,  B11100,  B11100,  B11
 byte c4[8] = {B11110,  B11110,  B11110,  B11110,  B11110,  B11110,  B11110,  B11110};
 byte c5[8] = {B11111,  B11111,  B11111,  B11111,  B11111,  B11111,  B11111,  B11111};
 
+uint8_t pines [7] = {0,1,2,3,11,12,13};
 
 //Funciones de ccontrol logico
 uint8_t readConfigs(config_u*);
@@ -59,13 +62,13 @@ void estateMachine (states_u *);
 //Funciones manejadoras de la pantalla
 void printHello(void);
 void printCounter(void);
-void printMenuEntry(void);
 void printDelayEntry(void);
 void printPulseEntry(void);
 void printOutputsEntry(void);
-void printSaveEntry(void);
-
+bool printSaveEntry(void);
+uint16_t setTimeOut(config_u * );
 void serialPrintConfigs(void);
+void makeItBlink(uint8_t);
 
 
 #endif
