@@ -7,8 +7,10 @@
 #define MAX_PULSE 1000
 #define MIN_PULSE 100
 
-#define MAX_OUTPUTS 7
+#define MAX_OUTPUTS sizeof(pines)
 #define MIN_OUTPUTS 1
+#define DRIVEN_STATE LOW
+
 
 //Definiciones de pines
 #define analogPin A0
@@ -37,9 +39,11 @@ typedef enum {
   menu_save
 } states_u;
 
-typedef enum{
-  delayAddress,
-  pulseAddress,
+typedef enum {
+  delayAddressB0,
+  delayAddressB1,
+  pulseAddressB0,
+  pulseAddressB1,
   outputsAddress
 } eepromAddress_u;
 
@@ -49,7 +53,7 @@ byte c3[8] = {B11100,  B11100,  B11100,  B11100,  B11100,  B11100,  B11100,  B11
 byte c4[8] = {B11110,  B11110,  B11110,  B11110,  B11110,  B11110,  B11110,  B11110};
 byte c5[8] = {B11111,  B11111,  B11111,  B11111,  B11111,  B11111,  B11111,  B11111};
 
-uint8_t pines [7] = {0,1,2,3,11,12,13};
+uint8_t pines [] = {0, 1, 2, 3, 11, 12, 13}; // Colocar aqui los nuevos pines de salida (solo quedan los analogicos libres)
 
 //Funciones de ccontrol logico
 uint8_t readConfigs(config_u*);

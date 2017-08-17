@@ -1,6 +1,7 @@
 #include <LiquidCrystal.h>
 #include <EEPROM.h>
 #include "header.h"
+#include <avr/wdt.h>
 
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7); //LCD pins
 
@@ -8,10 +9,19 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); //LCD pins
 config_u configuraciones;
 states_u estado = hello;
 uint16_t contador;
-uint8_t salidas= MIN_OUTPUTS;
+uint8_t salidas = MIN_OUTPUTS;
 
 void setup() {
-  Serial.begin(9600);
+  wdt_disable();
+
+  for (int i = 0 ; i <= MAX_OUTPUTS; i++) {
+    pinMode(pines [i], OUTPUT);
+  }
+
+  for (int i = 0 ; i <= MAX_OUTPUTS; i++) {
+    digitalWrite(pines [i], !DRIVEN_STATE);
+  }
+
   lcd.begin(16, 2); //LCD init
   lcd.createChar(0, c1);
   lcd.createChar(1, c2);
@@ -19,21 +29,23 @@ void setup() {
   lcd.createChar(3, c4);
   lcd.createChar(4, c5);
   readConfigs(&configuraciones);
-  serialPrintConfigs();
+  //serialPrintConfigs();        //comentamos esta funcion porque se usan los pines serie como salidas
+  wdt_enable(WDTO_4S);
 }
 
 void loop() {
   estateMachine(&estado);
   contador = setTimeOut(&configuraciones);
 
-  if (contador == 0){
+  if (contador == 0) {
     makeItBlink(salidas);
     salidas++;
-    if (salidas > configuraciones.outputs){
+    if (salidas > configuraciones.outputs) {
       salidas = MIN_OUTPUTS;
     }
     delay(1000);
   }
+  wdt_reset();
 }
 
 void estateMachine (states_u * estadoP) {
@@ -111,14 +123,27 @@ void estateMachine (states_u * estadoP) {
 
 //Funciones de control logico
 uint8_t readConfigs(config_u *temps) {
-  temps->delay   = EEPROM.read(delayAddress);
-  temps->pulse   = EEPROM.read(pulseAddress);
+  uint16_t delay, pulse;
+  delay = (EEPROM.read(delayAddressB0)) + (EEPROM.read(delayAddressB1) << 8);
+  pulse = (EEPROM.read(pulseAddressB0)) + (EEPROM.read(pulseAddressB1) << 8);
+
+  temps->delay   = delay;
+  temps->pulse   = pulse;
   temps->outputs = EEPROM.read(outputsAddress);
 }
 
 uint8_t saveConfigs(config_u *temps) {
-  EEPROM.write(delayAddress, temps->delay);
-  EEPROM.write(pulseAddress, temps->pulse);
+  uint8_t delayB0, delayB1, pulseB0, pulseB1;
+  delayB0 = temps->delay;
+  delayB1 = ((temps->delay) >> 8);
+  
+  pulseB0 = temps->pulse;
+  pulseB1 = ((temps->pulse) >> 8);
+
+  EEPROM.write(delayAddressB0, delayB0);
+  EEPROM.write(delayAddressB1, delayB1);
+  EEPROM.write(pulseAddressB0, pulseB0);
+  EEPROM.write(pulseAddressB1, pulseB1);
   EEPROM.write(outputsAddress, temps-> outputs);
 }
 
@@ -133,10 +158,10 @@ button_u readButton(uint8_t analogPin) {
   if (adc_key_in < 790)  return select;
 }
 
-void makeItBlink (uint8_t salida){
-  digitalWrite(pines [salida-1], HIGH);
+void makeItBlink (uint8_t salida) {
+  digitalWrite(pines [salida - 1], DRIVEN_STATE);
   delay(configuraciones.pulse);
-   digitalWrite(pines [salida-1], LOW);
+  digitalWrite(pines [salida - 1], !DRIVEN_STATE);
 }
 
 //Funciones de la pantalla (menus)
@@ -285,7 +310,6 @@ uint16_t setTimeOut(config_u * tempP) {
       interval = tempP->delay;
     }
   }
-  Serial.println(interval);
   return interval;
 }
 
